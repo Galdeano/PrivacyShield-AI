@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PrivacyShield AI — Anonimizador Reversible de Texto para IA</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+    body { font-family: 'Inter', sans-serif; background: #020617; color: #f8fafc; }
+    .mono { font-family: 'JetBrains Mono', monospace; }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col selection:bg-cyan-500 selection:text-white">
+
+  <header class="border-b border-slate-800 bg-slate-900/60 backdrop-blur-md sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="p-2 rounded-xl bg-gradient-to-tr from-cyan-600 to-blue-600 shadow-lg shadow-cyan-500/20">
+          <i class="fa-solid fa-shield-halved text-white text-lg"></i>
+        </div>
+        <span class="font-bold text-lg text-white tracking-tight">PrivacyShield AI</span>
+        <span class="text-xs px-2 py-0.5 rounded-full bg-cyan-950 border border-cyan-800 text-cyan-400 mono">v2.0</span>
+      </div>
+
+      <div class="flex items-center gap-2 text-xs mono">
+        <a href="../fr/" class="px-2 py-1 rounded bg-slate-900 text-slate-400 hover:text-white border border-slate-800">🇫🇷 FR</a>
+        <a href="../en/" class="px-2 py-1 rounded bg-slate-900 text-slate-400 hover:text-white border border-slate-800">🇬🇧 EN</a>
+        <a href="../de/" class="px-2 py-1 rounded bg-slate-900 text-slate-400 hover:text-white border border-slate-800">🇩🇪 DE</a>
+        <a href="../es/" class="px-2 py-1 rounded bg-cyan-600 text-white font-semibold">🇪🇸 ES</a>
+        <a href="../it/" class="px-2 py-1 rounded bg-slate-900 text-slate-400 hover:text-white border border-slate-800">🇮🇹 IT</a>
+        <a href="https://github.com/Galdeano/PrivacyShield-AI" target="_blank" class="ml-3 p-2 rounded-lg bg-slate-800 text-slate-300 hover:text-white transition">
+          <i class="fa-brands fa-github text-base"></i>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <section class="py-20 px-6 max-w-5xl mx-auto text-center space-y-6">
+    <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-cyan-950/80 border border-cyan-800/60 text-cyan-400 text-xs font-medium">
+      <i class="fa-solid fa-lock text-[10px]"></i> 100% Local • Cero Telemetría • Conforme con RGPD
+    </div>
+    <h1 class="text-4xl sm:text-6xl font-extrabold tracking-tight text-white leading-tight">
+      Usa ChatGPT y Claude <br class="hidden sm:inline">
+      <span class="bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">sin exponer tus datos confidenciales</span>
+    </h1>
+    <p class="text-lg text-slate-400 max-w-2xl mx-auto">
+      Aplicación de escritorio reversible: reemplaza nombres, empresas, direcciones e IBANs con etiquetas seguras antes de enviarlos a la IA y restaura los valores reales en la respuesta.
+    </p>
+
+    <div class="pt-4 flex flex-col sm:flex-row items-center justify-center gap-4">
+      <a href="https://github.com/Galdeano/PrivacyShield-AI/releases/latest" target="_blank"
+         class="w-full sm:w-auto px-8 py-3.5 rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-semibold shadow-lg shadow-cyan-600/30 flex items-center justify-center gap-2 transition cursor-pointer">
+        <i class="fa-brands fa-windows text-lg"></i>
+        Descargar para Windows (.exe)
+      </a>
+      <a href="https://github.com/Galdeano/PrivacyShield-AI" target="_blank"
+         class="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-300 hover:text-white font-medium flex items-center justify-center gap-2 transition">
+        <i class="fa-brands fa-github text-lg"></i>
+        Ver en GitHub
+      </a>
+    </div>
+  </section>
+
+  <footer class="mt-auto border-t border-slate-800 bg-slate-950 py-8 px-6 text-center text-xs text-slate-500 space-y-2">
+    <p>PrivacyShield AI — Creado por David Galdeano • Licencia Business Source License 1.1 (BSL 1.1)</p>
+    <p class="mono text-[11px]">Gratis para uso personal y no comercial • Conversión automática a Licencia MIT en 2030</p>
+  </footer>
+
+</body>
+</html>

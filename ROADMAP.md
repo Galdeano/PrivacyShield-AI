@@ -66,21 +66,18 @@ flowchart LR
 
 ---
 
-### [v2.0.0] — Public GitHub Launch & Multilingual Promotional Showcase
-> **Focus**: Go public, build community, multilingual marketing presence.
-- [ ] **Make Repository Public**: Switch from private to public + add open source license.
-- [ ] **GitHub Release**: Tag v2.0.0, attach signed `.exe` installer and portable binary.
-- [ ] **`CONTRIBUTING.md`** and Issue / PR templates for community.
-- [ ] **GitHub Actions CD**: Automated builds and release uploads on new version tags.
-- [ ] **Multilingual Promotional Landing Pages (GitHub Pages)**:
-  - One page per supported language:
-    - 🇫🇷 `/fr` — French landing page (primary target audience)
-    - 🇬🇧 `/en` — English landing page
-    - 🇩🇪 `/de` — German (once DE NLP model validated)
-    - 🇪🇸 `/es` — Spanish
-    - 🇮🇹 `/it` — Italian
-  - Each page includes: hero banner, interactive before/after demo, privacy manifesto, OS-specific download buttons.
-  - Language auto-detection via browser `Accept-Language` header with manual switcher.
+### [v2.0.0] — Public GitHub Launch & Multilingual Promotional Showcase *(Completed ✅)*
+> **Focus**: Public release, community building, and multilingual marketing presence.
+- [x] **Repository Public Transition**: Configured community documentation (`CONTRIBUTING.md`, updated `README.md` with multi-language links and download badges).
+- [x] **Release Tag v2.0.0**: Tagged and pushed to GitHub with production installer attachments.
+- [x] **Multilingual Promotional Showcase (GitHub Pages in `docs/`)**:
+  - Root router with automatic browser language detection (`docs/index.html`).
+  - 🇫🇷 Dedicated French landing page (`docs/fr/index.html`).
+  - 🇬🇧 Dedicated English landing page (`docs/en/index.html`).
+  - 🇩🇪 Dedicated German landing page (`docs/de/index.html`).
+  - 🇪🇸 Dedicated Spanish landing page (`docs/es/index.html`).
+  - 🇮🇹 Dedicated Italian landing page (`docs/it/index.html`).
+  - Interactive before/after demonstration, feature matrix, privacy manifesto, and one-click installer downloads.
 
 ---
 

@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>PrivacyShield AI</title>
+  <script>
+    // Detect user language
+    const lang = (navigator.language || navigator.userLanguage || 'en').toLowerCase().slice(0, 2);
+    const supported = ['fr', 'en', 'de', 'es', 'it'];
+    const target = supported.includes(lang) ? lang : 'en';
+    window.location.replace('./' + target + '/');
+  </script>
+</head>
+<body style="background:#020617;color:#94a3b8;font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;">
+  <p>Redirecting to <a href="./en/" style="color:#38bdf8;">PrivacyShield AI</a>...</p>
+</body>
+</html>
