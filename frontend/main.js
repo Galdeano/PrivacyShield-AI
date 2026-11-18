@@ -6,7 +6,7 @@ const http = require('http');
 let mainWindow = null;
 let pythonProcess = null;
 
-function checkBackendHealth(retries = 30, delay = 500) {
+function checkBackendHealth(retries = 40, delay = 500) {
   return new Promise((resolve) => {
     let attempts = 0;
     const interval = setInterval(() => {
@@ -29,13 +29,25 @@ function checkBackendHealth(retries = 30, delay = 500) {
 }
 
 function startPythonBackend() {
-  const rootDir = path.join(__dirname, '..');
-  const pythonPath = path.join(rootDir, 'venv', 'Scripts', 'python.exe');
-  const serverScript = path.join(rootDir, 'engine', 'server.py');
+  const isPackaged = app.isPackaged;
+  
+  // In development: ../venv/Scripts/python.exe
+  // In packaged app: process.resourcesPath/venv/Scripts/python.exe
+  let pythonPath, serverScript, rootDir;
+
+  if (isPackaged) {
+    rootDir = process.resourcesPath;
+    pythonPath = path.join(process.resourcesPath, 'venv', 'Scripts', 'python.exe');
+    serverScript = path.join(process.resourcesPath, 'engine', 'server.py');
+  } else {
+    rootDir = path.join(__dirname, '..');
+    pythonPath = path.join(rootDir, 'venv', 'Scripts', 'python.exe');
+    serverScript = path.join(rootDir, 'engine', 'server.py');
+  }
 
   pythonProcess = spawn(pythonPath, [serverScript], {
     cwd: rootDir,
-    stdio: 'inherit',
+    stdio: 'ignore',
     env: { ...process.env, PYTHONPATH: rootDir }
   });
 
@@ -60,15 +72,12 @@ function createWindow() {
   });
 
   mainWindow.setMenuBarVisibility(false);
-
-  // Directly load production build of React app
   mainWindow.loadFile(path.join(__dirname, 'dist', 'index.html'));
 }
 
 app.whenReady().then(async () => {
   startPythonBackend();
-  // Wait briefly for the backend engine to start up
-  await checkBackendHealth(20, 300);
+  await checkBackendHealth(30, 400);
   createWindow();
 
   app.on('activate', () => {

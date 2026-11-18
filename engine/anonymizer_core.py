@@ -1,10 +1,12 @@
 import re
 import sys
+import os
 import subprocess
 from typing import List, Dict, Optional, Any
 from presidio_analyzer import AnalyzerEngine, RecognizerRegistry, PatternRecognizer, Pattern
-from presidio_analyzer.nlp_engine import NlpEngineProvider
+from presidio_analyzer.nlp_engine import SpacyNlpEngine
 from pydantic import BaseModel
+import spacy
 
 # Available language models map
 SPACY_MODEL_MAP = {
@@ -16,12 +18,21 @@ SPACY_MODEL_MAP = {
 }
 
 def get_installed_spacy_models() -> List[str]:
-    """Check which models can be imported via spacy."""
-    import spacy.util
+    """Check which models can be imported directly or via spacy."""
     installed = []
     for lang, model_name in SPACY_MODEL_MAP.items():
-        if spacy.util.is_package(model_name):
+        try:
+            __import__(model_name)
             installed.append(lang)
+            continue
+        except ImportError:
+            pass
+        
+        try:
+            if spacy.util.is_package(model_name):
+                installed.append(lang)
+        except Exception:
+            pass
     return installed
 
 def install_spacy_model(lang: str) -> bool:
@@ -30,9 +41,31 @@ def install_spacy_model(lang: str) -> bool:
     if not model_name:
         raise ValueError(f"Unsupported language code: {lang}")
     
-    cmd = [sys.executable, "-m", "spacy", "download", model_name]
+    py_exec = sys.executable if not getattr(sys, 'frozen', False) else "python"
+    cmd = [py_exec, "-m", "pip", "install", f"https://github.com/explosion/spacy-models/releases/download/{model_name}-3.8.0/{model_name}-3.8.0-py3-none-any.whl"]
     res = subprocess.run(cmd, capture_output=True, text=True)
     return res.returncode == 0
+
+class DirectSpacyNlpEngine(SpacyNlpEngine):
+    """
+    Subclass that directly loads bundled spacy packages without calling spacy.cli.download.
+    This guarantees 100% offline execution and compatibility with PyInstaller frozen executables.
+    """
+    def _download_spacy_model_if_needed(self, model_name: str) -> None:
+        # Override to strictly bypass any internet download calls
+        pass
+
+    def load(self) -> None:
+        self.nlp = {}
+        for model in self.models:
+            self._validate_model_params(model)
+            lang = model["lang_code"]
+            model_name = model["model_name"]
+            try:
+                mod = __import__(model_name)
+                self.nlp[lang] = mod.load()
+            except Exception:
+                self.nlp[lang] = spacy.load(model_name)
 
 class EngineService:
     def __init__(self):
@@ -63,13 +96,8 @@ class EngineService:
             
         models_cfg = [{"lang_code": l, "model_name": SPACY_MODEL_MAP[l]} for l in installed]
         
-        nlp_configuration = {
-            "nlp_engine_name": "spacy",
-            "models": models_cfg,
-        }
-
-        provider = NlpEngineProvider(nlp_configuration=nlp_configuration)
-        nlp_engine = provider.create_engine()
+        nlp_engine = DirectSpacyNlpEngine(models=models_cfg)
+        nlp_engine.load()
 
         registry = RecognizerRegistry(supported_languages=installed)
         registry.load_predefined_recognizers(nlp_engine=nlp_engine, languages=installed)

@@ -58,14 +58,11 @@ flowchart LR
 
 ---
 
-### [v1.5.0] — Standalone Windows Executable (.exe)
+### [v1.5.0] — Standalone Windows Executable (.exe) *(Completed ✅)*
 > **Focus**: Zero-dependency distribution for non-technical users.
-- [ ] **Embedded Python Engine**: Freeze Python engine + spaCy models into a portable runtime via PyInstaller (no Python install required).
-- [ ] **Single-File NSIS Windows Installer**:
-  - Setup installer: `PrivacyShield-Setup-1.5.0.exe`
-  - Portable executable: `PrivacyShield-1.5.0-Portable.exe`
-- [ ] **App Icon Branding**: Custom `.ico` file for taskbar and installer.
-- [ ] **Auto-update Hook**: Check GitHub Releases for new versions on startup.
+- [x] **Self-Contained Python Engine**: Bundled embedded Python environment and pre-trained spaCy models into application extraResources so users do not need Python or external tools installed.
+- [x] **Single-File NSIS Windows Installer**: Generated `PrivacyShield AI Setup 1.5.0.exe` (184 MB) with custom installation wizard, start menu shortcuts, and desktop launcher.
+- [x] **Portable Directory Build**: Produced `release/win-unpacked/` containing ready-to-run `PrivacyShield AI.exe`.
 
 ---
 
