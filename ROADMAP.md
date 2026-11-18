@@ -48,14 +48,13 @@ flowchart LR
 
 ---
 
-### [v1.4.0] — Private GitHub Repository & Version Control *(Next 🎯)*
+### [v1.4.0] — Private GitHub Repository & Version Control *(Completed ✅)*
 > **Focus**: Safe, versioned development workflow before distributing to users.
-- [ ] **Git Initialization**: Clean commit history from day one, structured `.gitignore` (excluding `venv/`, `node_modules/`, `dist/`, `.env`).
-- [ ] **Private GitHub Remote**: Push to a private repository for personal version control, branch protection, and history.
-- [ ] **Branch Strategy**: `main` (stable) + `dev` (active development) branches established.
-- [ ] **LICENSE Decision**: Choose and commit a license file (see analysis below).
-- [ ] **Community Files**: `README.md` (private internal docs), `CHANGELOG.md` to track versions.
-- [ ] **GitHub Actions CI** (optional): Automated Vite build check on push.
+- [x] **Git Initialization**: Clean commit history, production `.gitignore` filtering out virtualenvs, node_modules, build artifacts.
+- [x] **Private GitHub Remote**: Hosted securely at [`https://github.com/Galdeano/PrivacyShield-AI`](https://github.com/Galdeano/PrivacyShield-AI).
+- [x] **Branch Strategy**: `main` (stable production) + `dev` (active development) branches established and pushed.
+- [x] **BSL 1.1 License**: Formalized with David Galdeano copyright, personal/non-commercial grants, commercial license requirement for businesses, auto-converting to MIT on Jan 1, 2030.
+- [x] **Changelog & CI**: Added `CHANGELOG.md` and automated GitHub Actions workflow (`.github/workflows/ci.yml`).
 
 ---
 
