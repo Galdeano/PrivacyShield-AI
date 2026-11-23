@@ -2,6 +2,9 @@
 # Python
 # ============================================================
 venv/
+python_embed/
+*.spec
+*.txt
 __pycache__/
 *.py[cod]
 *.pyo

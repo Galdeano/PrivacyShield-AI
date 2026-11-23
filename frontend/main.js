@@ -6,7 +6,7 @@ const http = require('http');
 let mainWindow = null;
 let pythonProcess = null;
 
-function checkBackendHealth(retries = 50, delay = 500) {
+function checkBackendHealth(retries = 60, delay = 500) {
   return new Promise((resolve) => {
     let attempts = 0;
     const interval = setInterval(() => {
@@ -31,8 +31,6 @@ function checkBackendHealth(retries = 50, delay = 500) {
 function startPythonBackend() {
   const isPackaged = app.isPackaged;
   
-  // In development: ../python_embed/python.exe
-  // In packaged app: process.resourcesPath/python_embed/python.exe
   let pythonPath, serverScript, rootDir;
 
   if (isPackaged) {
@@ -65,6 +63,7 @@ function createWindow() {
     minHeight: 650,
     title: 'PrivacyShield AI — Reversible Text Anonymizer',
     backgroundColor: '#020617',
+    show: true,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       nodeIntegration: false,
@@ -74,12 +73,18 @@ function createWindow() {
 
   mainWindow.setMenuBarVisibility(false);
   mainWindow.loadFile(path.join(__dirname, 'dist', 'index.html'));
+  
+  mainWindow.once('ready-to-show', () => {
+    mainWindow.show();
+  });
 }
 
-app.whenReady().then(async () => {
-  startPythonBackend();
-  await checkBackendHealth(40, 500);
+app.whenReady().then(() => {
+  // 1. Ouvrir immédiatement la fenêtre de l'application
   createWindow();
+
+  // 2. Lancer le moteur Python en arrière-plan (l'interface affiche le statut en direct)
+  startPythonBackend();
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
