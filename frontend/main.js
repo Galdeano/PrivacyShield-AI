@@ -6,7 +6,7 @@ const http = require('http');
 let mainWindow = null;
 let pythonProcess = null;
 
-function checkBackendHealth(retries = 40, delay = 500) {
+function checkBackendHealth(retries = 50, delay = 500) {
   return new Promise((resolve) => {
     let attempts = 0;
     const interval = setInterval(() => {
@@ -31,23 +31,24 @@ function checkBackendHealth(retries = 40, delay = 500) {
 function startPythonBackend() {
   const isPackaged = app.isPackaged;
   
-  // In development: ../venv/Scripts/python.exe
-  // In packaged app: process.resourcesPath/venv/Scripts/python.exe
+  // In development: ../python_embed/python.exe
+  // In packaged app: process.resourcesPath/python_embed/python.exe
   let pythonPath, serverScript, rootDir;
 
   if (isPackaged) {
     rootDir = process.resourcesPath;
-    pythonPath = path.join(process.resourcesPath, 'venv', 'Scripts', 'python.exe');
+    pythonPath = path.join(process.resourcesPath, 'python_embed', 'python.exe');
     serverScript = path.join(process.resourcesPath, 'engine', 'server.py');
   } else {
     rootDir = path.join(__dirname, '..');
-    pythonPath = path.join(rootDir, 'venv', 'Scripts', 'python.exe');
+    pythonPath = path.join(rootDir, 'python_embed', 'python.exe');
     serverScript = path.join(rootDir, 'engine', 'server.py');
   }
 
   pythonProcess = spawn(pythonPath, [serverScript], {
     cwd: rootDir,
     stdio: 'ignore',
+    windowsHide: true,
     env: { ...process.env, PYTHONPATH: rootDir }
   });
 
@@ -77,7 +78,7 @@ function createWindow() {
 
 app.whenReady().then(async () => {
   startPythonBackend();
-  await checkBackendHealth(30, 400);
+  await checkBackendHealth(40, 500);
   createWindow();
 
   app.on('activate', () => {
