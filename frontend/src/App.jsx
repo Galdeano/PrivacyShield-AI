@@ -130,6 +130,7 @@ export default function App() {
 
   const [isLoading, setIsLoading] = useState(false);
   const [engineReady, setEngineReady] = useState(false);
+  const [engineStatus, setEngineStatus] = useState('connecting'); // 'connecting' | 'initializing' | 'ready'
   const [copiedState, setCopiedState] = useState(null);
   const [statusMessage, setStatusMessage] = useState('');
 
@@ -147,15 +148,26 @@ export default function App() {
       try {
         const res = await fetch(`${API_BASE}/health`);
         if (res.ok) {
-          setEngineReady(true);
-          fetchModels();
+          const data = await res.json();
+          if (data.ready) {
+            setEngineReady(true);
+            setEngineStatus('ready');
+            fetchModels();
+          } else {
+            setEngineReady(false);
+            setEngineStatus('initializing');
+          }
+        } else {
+          setEngineReady(false);
+          setEngineStatus('connecting');
         }
       } catch (e) {
         setEngineReady(false);
+        setEngineStatus('connecting');
       }
     };
     checkHealth();
-    const interval = setInterval(checkHealth, 3000);
+    const interval = setInterval(checkHealth, 2000);
     return () => clearInterval(interval);
   }, [fetchModels]);
 
@@ -447,9 +459,19 @@ export default function App() {
         <div className="flex items-center gap-3">
           {/* Engine Status indicator */}
           <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-900 border border-slate-800 text-xs">
-            <span className={`w-2.5 h-2.5 rounded-full ${engineReady ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500'}`} />
+            <span className={`w-2.5 h-2.5 rounded-full ${
+              engineStatus === 'ready' 
+                ? 'bg-emerald-500 animate-pulse' 
+                : engineStatus === 'initializing'
+                ? 'bg-amber-400 animate-pulse'
+                : 'bg-rose-500'
+            }`} />
             <span className="text-slate-300 font-medium">
-              {engineReady ? t.engineActive : t.engineConnecting}
+              {engineStatus === 'ready'
+                ? t.engineActive
+                : engineStatus === 'initializing'
+                ? t.engineInitializing
+                : t.engineConnecting}
             </span>
           </div>
 

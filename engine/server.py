@@ -1,5 +1,6 @@
 import sys
 import os
+import threading
 
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_ROOT = os.path.dirname(CURRENT_DIR)
@@ -11,7 +12,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Dict, List, Any, Optional
 
-app = FastAPI(title="Text Anonymizer Engine", version="1.3.0")
+app = FastAPI(title="Text Anonymizer Engine", version="2.0.2")
 
 app.add_middleware(
     CORSMiddleware,
@@ -22,13 +23,45 @@ app.add_middleware(
 )
 
 _engine_service = None
+_engine_loading = False
+_engine_ready = False
+_engine_error = None
+_engine_lock = threading.Lock()
+
+def _load_engine_worker():
+    global _engine_service, _engine_ready, _engine_error, _engine_loading
+    try:
+        print("[Engine] Initializing spaCy & Presidio models in background...", flush=True)
+        from engine.anonymizer_core import engine_service
+        with _engine_lock:
+            _engine_service = engine_service
+            _engine_ready = True
+        print("[Engine] Models loaded successfully! Engine is ready.", flush=True)
+    except Exception as e:
+        import traceback
+        _engine_error = str(e)
+        print(f"[Engine] Error loading models: {e}", flush=True)
+        traceback.print_exc()
+    finally:
+        _engine_loading = False
 
 def get_engine():
-    global _engine_service
-    if _engine_service is None:
-        from engine.anonymizer_core import engine_service
-        _engine_service = engine_service
+    global _engine_service, _engine_ready
+    if _engine_service is not None:
+        return _engine_service
+    with _engine_lock:
+        if _engine_service is None:
+            from engine.anonymizer_core import engine_service
+            _engine_service = engine_service
+            _engine_ready = True
     return _engine_service
+
+@app.on_event("startup")
+def startup_event():
+    global _engine_loading
+    _engine_loading = True
+    loader_thread = threading.Thread(target=_load_engine_worker, daemon=True)
+    loader_thread.start()
 
 class AnalyzePayload(BaseModel):
     text: str
@@ -48,6 +81,13 @@ class InstallModelPayload(BaseModel):
 
 @app.get("/health")
 def health():
+    return {
+        "status": "ok" if _engine_ready else "initializing",
+        "ready": _engine_ready,
+        "service": "local-anonymizer-engine",
+        "error": _engine_error,
+        "version": "2.0.2"
+    }
     return {"status": "ok", "service": "local-anonymizer-engine", "version": "1.3.0"}
 
 @app.get("/models")
@@ -106,7 +146,5 @@ def deanonymize_endpoint(payload: DeanonymizePayload):
 
 if __name__ == "__main__":
     import uvicorn
-    print("[Engine] Initializing spaCy & Presidio models...")
-    get_engine()
-    print("[Engine] Models loaded successfully! Starting server on http://127.0.0.1:8765...")
+    print("[Engine] Starting server immediately on http://127.0.0.1:8765...", flush=True)
     uvicorn.run(app, host="127.0.0.1", port=8765, log_level="info")

@@ -1,32 +1,11 @@
 const { app, BrowserWindow } = require('electron');
 const path = require('path');
+const fs = require('fs');
 const { spawn } = require('child_process');
 const http = require('http');
 
 let mainWindow = null;
 let pythonProcess = null;
-
-function checkBackendHealth(retries = 60, delay = 500) {
-  return new Promise((resolve) => {
-    let attempts = 0;
-    const interval = setInterval(() => {
-      attempts++;
-      const req = http.get('http://127.0.0.1:8765/health', (res) => {
-        if (res.statusCode === 200) {
-          clearInterval(interval);
-          resolve(true);
-        }
-      });
-      req.on('error', () => {
-        if (attempts >= retries) {
-          clearInterval(interval);
-          resolve(false);
-        }
-      });
-      req.end();
-    }, delay);
-  });
-}
 
 function startPythonBackend() {
   const isPackaged = app.isPackaged;
@@ -43,15 +22,54 @@ function startPythonBackend() {
     serverScript = path.join(rootDir, 'engine', 'server.py');
   }
 
+  // Ensure log directory exists in user profile (always writable)
+  const logDir = app.getPath('userData');
+  try {
+    if (!fs.existsSync(logDir)) {
+      fs.mkdirSync(logDir, { recursive: true });
+    }
+  } catch (e) {}
+
+  const logFile = path.join(logDir, 'backend_engine.log');
+  let logFd;
+  try {
+    logFd = fs.openSync(logFile, 'a');
+    fs.appendFileSync(logFile, `\n--- [${new Date().toISOString()}] Launching Python Backend ---\n`);
+    fs.appendFileSync(logFile, `Python path: ${pythonPath}\nScript path: ${serverScript}\nWorking dir: ${rootDir}\n`);
+  } catch (e) {
+    console.error('Could not open log file:', e);
+  }
+
+  const stdioOption = logFd !== undefined ? ['ignore', logFd, logFd] : 'pipe';
+
   pythonProcess = spawn(pythonPath, [serverScript], {
     cwd: rootDir,
-    stdio: 'ignore',
+    stdio: stdioOption,
     windowsHide: true,
-    env: { ...process.env, PYTHONPATH: rootDir }
+    env: {
+      ...process.env,
+      PYTHONPATH: rootDir,
+      PYTHONUNBUFFERED: '1'
+    }
   });
+
+  if (stdioOption === 'pipe' && pythonProcess) {
+    pythonProcess.stdout?.on('data', (d) => console.log('[Python STDOUT]', d.toString()));
+    pythonProcess.stderr?.on('data', (d) => console.error('[Python STDERR]', d.toString()));
+  }
 
   pythonProcess.on('error', (err) => {
     console.error('Failed to start Python backend:', err);
+    try {
+      if (logFile) fs.appendFileSync(logFile, `[ERROR] Failed to start Python backend: ${err.message}\n`);
+    } catch (e) {}
+  });
+
+  pythonProcess.on('exit', (code, signal) => {
+    console.log(`Python process exited with code ${code}, signal ${signal}`);
+    try {
+      if (logFile) fs.appendFileSync(logFile, `[INFO] Python process exited with code ${code}, signal ${signal}\n`);
+    } catch (e) {}
   });
 }
 
