@@ -12,7 +12,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Dict, List, Any, Optional
 
-app = FastAPI(title="Text Anonymizer Engine", version="2.0.2")
+app = FastAPI(title="Text Anonymizer Engine", version="2.0.0")
 
 app.add_middleware(
     CORSMiddleware,
@@ -86,7 +86,7 @@ def health():
         "ready": _engine_ready,
         "service": "local-anonymizer-engine",
         "error": _engine_error,
-        "version": "2.0.2"
+        "version": "2.0.0"
     }
     return {"status": "ok", "service": "local-anonymizer-engine", "version": "1.3.0"}
 
