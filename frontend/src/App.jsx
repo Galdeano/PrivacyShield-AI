@@ -31,7 +31,7 @@ import {
 } from 'lucide-react';
 import { translations } from './i18n';
 
-const API_BASE = 'http://127.0.0.1:8765';
+
 
 const LANG_LABELS = {
   en: 'English',
@@ -48,6 +48,23 @@ const FLAG_EMOJIS = {
 export default function App() {
   const [activeTab, setActiveTab] = useState('anonymize');
   
+  // Dynamic API port (defaults to 8765, updated by main process if port was busy)
+  const [apiPort, setApiPort] = useState(8765);
+  const apiBase = `http://127.0.0.1:${apiPort}`;
+
+  useEffect(() => {
+    if (window.electronAPI?.getApiPort) {
+      window.electronAPI.getApiPort().then((port) => {
+        if (port) setApiPort(port);
+      });
+    }
+    if (window.electronAPI?.onApiPortChanged) {
+      window.electronAPI.onApiPortChanged((port) => {
+        if (port) setApiPort(port);
+      });
+    }
+  }, []);
+
   // Internationalization & NLP language
   const [guiLang, setGuiLang] = useState('fr');
   const [nlpLang, setNlpLang] = useState('fr');
@@ -58,21 +75,21 @@ export default function App() {
   const [installingLang, setInstallingLang] = useState(null); // lang code being downloaded
   const [installMessage, setInstallMessage] = useState(null); // { type: 'success'|'error', text }
 
-  const fetchModels = useCallback(async () => {
+  const fetchModels = useCallback(async (port = apiPort) => {
     try {
-      const res = await fetch(`${API_BASE}/models`);
+      const res = await fetch(`http://127.0.0.1:${port}/models`);
       if (res.ok) {
         const data = await res.json();
         setAvailableModels(data.models || []);
       }
     } catch (e) {}
-  }, []);
+  }, [apiPort]);
 
   const handleInstallModel = async (langCode) => {
     setInstallingLang(langCode);
     setInstallMessage(null);
     try {
-      const res = await fetch(`${API_BASE}/models/install`, {
+      const res = await fetch(`${apiBase}/models/install`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ language: langCode })
@@ -146,13 +163,13 @@ export default function App() {
   useEffect(() => {
     const checkHealth = async () => {
       try {
-        const res = await fetch(`${API_BASE}/health`);
+        const res = await fetch(`http://127.0.0.1:${apiPort}/health`);
         if (res.ok) {
           const data = await res.json();
           if (data.ready) {
             setEngineReady(true);
             setEngineStatus('ready');
-            fetchModels();
+            fetchModels(apiPort);
           } else {
             setEngineReady(false);
             setEngineStatus('initializing');
@@ -169,7 +186,7 @@ export default function App() {
     checkHealth();
     const interval = setInterval(checkHealth, 2000);
     return () => clearInterval(interval);
-  }, [fetchModels]);
+  }, [apiPort, fetchModels]);
 
   // Handle text selection in input textarea
   const handleSelectText = (e) => {
@@ -228,7 +245,7 @@ export default function App() {
     setIsLoading(true);
     setStatusMessage('Analyzing text with local NLP engine...');
     try {
-      const res = await fetch(`${API_BASE}/analyze`, {
+      const res = await fetch(`${apiBase}/analyze`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
@@ -271,7 +288,7 @@ export default function App() {
     const mappings = getActiveMappings();
     setIsLoading(true);
     try {
-      const res = await fetch(`${API_BASE}/anonymize`, {
+      const res = await fetch(`${apiBase}/anonymize`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text: inputText, mappings })
@@ -294,7 +311,7 @@ export default function App() {
     const mappings = getActiveMappings();
     setIsLoading(true);
     try {
-      const res = await fetch(`${API_BASE}/deanonymize`, {
+      const res = await fetch(`${apiBase}/deanonymize`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text: aiResponseText, mappings })
@@ -1060,7 +1077,7 @@ export default function App() {
           <span>{statusMessage || t.statusReady}</span>
         </div>
         <div className="flex items-center gap-4 text-slate-500 font-mono text-[11px]">
-          <span>Port: 8765</span>
+          <span>Port: {apiPort}</span>
           <span>NLP: {nlpLang.toUpperCase()}</span>
           <span>GUI: {guiLang.toUpperCase()}</span>
         </div>

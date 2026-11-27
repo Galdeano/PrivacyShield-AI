@@ -1,14 +1,68 @@
-const { app, BrowserWindow } = require('electron');
+const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('path');
 const fs = require('fs');
-const { spawn } = require('child_process');
+const net = require('net');
+const { spawn, execSync } = require('child_process');
 const http = require('http');
 
 let mainWindow = null;
 let pythonProcess = null;
+let assignedPort = 8765;
 
-function startPythonBackend() {
+ipcMain.handle('get-api-port', () => assignedPort);
+
+function tryKillStaleProcessOnPort(port) {
+  if (process.platform !== 'win32') return;
+  try {
+    const out = execSync(`netstat -ano -p tcp | findstr :${port}`, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] });
+    const lines = out.split('\r\n');
+    for (const line of lines) {
+      if (line.includes('LISTENING') || line.includes('CLOSE_WAIT')) {
+        const parts = line.trim().split(/\s+/);
+        const pid = parts[parts.length - 1];
+        if (pid && pid !== '0' && parseInt(pid) > 0 && parseInt(pid) !== process.pid) {
+          try {
+            execSync(`taskkill /F /PID ${pid} /T`, { stdio: 'ignore' });
+            console.log(`Killed stale process on port ${port}: PID ${pid}`);
+          } catch (e) {}
+        }
+      }
+    }
+  } catch (e) {}
+}
+
+function getFreePort(startPort = 8765) {
+  return new Promise((resolve) => {
+    const server = net.createServer();
+    server.once('error', (err) => {
+      if (err.code === 'EADDRINUSE') {
+        resolve(getFreePort(startPort + 1));
+      } else {
+        resolve(startPort);
+      }
+    });
+    server.once('listening', () => {
+      const port = server.address().port;
+      server.close(() => resolve(port));
+    });
+    server.listen(startPort, '127.0.0.1');
+  });
+}
+
+async function startPythonBackend() {
   const isPackaged = app.isPackaged;
+  
+  // Try freeing default port from any zombie process left from an earlier run
+  tryKillStaleProcessOnPort(8765);
+
+  // Find guaranteed available port (8765 or next free: 8766, 8767...)
+  assignedPort = await getFreePort(8765);
+  console.log(`Assigned local engine port: ${assignedPort}`);
+
+  // Notify frontend if window is already loaded
+  if (mainWindow && mainWindow.webContents) {
+    mainWindow.webContents.send('api-port-changed', assignedPort);
+  }
   
   let pythonPath, serverScript, rootDir;
 
@@ -34,7 +88,7 @@ function startPythonBackend() {
   let logFd;
   try {
     logFd = fs.openSync(logFile, 'a');
-    fs.appendFileSync(logFile, `\n--- [${new Date().toISOString()}] Launching Python Backend ---\n`);
+    fs.appendFileSync(logFile, `\n--- [${new Date().toISOString()}] Launching Python Backend on Port ${assignedPort} ---\n`);
     fs.appendFileSync(logFile, `Python path: ${pythonPath}\nScript path: ${serverScript}\nWorking dir: ${rootDir}\n`);
   } catch (e) {
     console.error('Could not open log file:', e);
@@ -42,7 +96,7 @@ function startPythonBackend() {
 
   const stdioOption = logFd !== undefined ? ['ignore', logFd, logFd] : 'pipe';
 
-  pythonProcess = spawn(pythonPath, [serverScript], {
+  pythonProcess = spawn(pythonPath, [serverScript, '--port', assignedPort.toString()], {
     cwd: rootDir,
     stdio: stdioOption,
     windowsHide: true,
@@ -101,7 +155,7 @@ app.whenReady().then(() => {
   // 1. Ouvrir immédiatement la fenêtre de l'application
   createWindow();
 
-  // 2. Lancer le moteur Python en arrière-plan (l'interface affiche le statut en direct)
+  // 2. Lancer le moteur Python en arrière-plan avec port dynamique
   startPythonBackend();
 
   app.on('activate', () => {
@@ -112,9 +166,13 @@ app.whenReady().then(() => {
 });
 
 function cleanup() {
-  if (pythonProcess) {
+  if (pythonProcess && pythonProcess.pid) {
     try {
-      pythonProcess.kill();
+      if (process.platform === 'win32') {
+        spawn('taskkill', ['/pid', pythonProcess.pid.toString(), '/f', '/t']);
+      } else {
+        pythonProcess.kill('SIGKILL');
+      }
     } catch (e) {}
   }
 }

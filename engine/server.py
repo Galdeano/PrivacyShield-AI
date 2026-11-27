@@ -146,5 +146,10 @@ def deanonymize_endpoint(payload: DeanonymizePayload):
 
 if __name__ == "__main__":
     import uvicorn
-    print("[Engine] Starting server immediately on http://127.0.0.1:8765...", flush=True)
-    uvicorn.run(app, host="127.0.0.1", port=8765, log_level="info")
+    import argparse
+    parser = argparse.ArgumentParser(description="PrivacyShield NLP Engine Server")
+    parser.add_argument("--port", type=int, default=8765, help="Port to listen on (default 8765)")
+    args, _ = parser.parse_known_args()
+
+    print(f"[Engine] Starting server immediately on http://127.0.0.1:{args.port}...", flush=True)
+    uvicorn.run(app, host="127.0.0.1", port=args.port, log_level="info")
