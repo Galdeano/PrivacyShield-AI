@@ -64,7 +64,7 @@ When using external cloud LLMs (ChatGPT, Claude, Gemini, DeepSeek), pasting conf
 
 Download the latest standalone Windows installer from the [Releases Page](https://github.com/Galdeano/PrivacyShield-AI/releases/latest):
 
-- **Installer (`.exe`)**: `PrivacyShield AI Setup 1.5.0.exe` (~184 MB)  
+- **Installer (`.exe`)**: `PrivacyShield AI Setup 2.0.0.exe` (~201 MB)  
   *Completely self-contained: includes the embedded Python environment and NLP models. No Python or Node installation required.*
 
 ---
